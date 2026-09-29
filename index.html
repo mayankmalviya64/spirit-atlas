@@ -202,7 +202,7 @@ html { scroll-behavior: smooth; }
       <p class="sub">A two-minute scroll through how every drink is made, then an atlas you can wander around in.</p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="#story">Start the story ↓</a>
-        <a class="btn" href="#hub">Skip to the tools</a>
+        <a class="btn" href="atlas.html">Skip to the full Atlas</a>
       </div>
       <!-- "Pick your path" shortcuts jump straight into a hub tool -->
       <div class="paths" aria-label="Pick your path">
@@ -258,7 +258,7 @@ html { scroll-behavior: smooth; }
   <footer class="site-foot">
     <p><strong>Spirit Atlas</strong> is an educational project. It does not sell or promote the purchase of alcohol. Brand ownership is stated as of 2026; ⚠️ marks facts still being verified.</p>
     <p class="footer-note">For adults of legal drinking age only. Please drink responsibly, and never drink and drive.</p>
-    <p class="proto-note">Want everything at once? <a href="atlas.html">Open the full Atlas</a> · data v<span id="ver"></span></p>
+    <p class="proto-note">Want everything at once? <a href="atlas.html">Open the full Atlas</a></p>
   </footer>
 </main>
 
@@ -274,7 +274,6 @@ html { scroll-behavior: smooth; }
   A.initTheme(document.getElementById("theme"));
   A.initSearch(document.getElementById("q"), document.getElementById("q-results"));
   A.startTicker(document.getElementById("ticker"));
-  document.getElementById("ver").textContent = D.version;
 
   /* ----- Hero: the last word of the headline cycles ----- */
   var words = ["you", "grain", "grape", "cane", "agave", "you"], w = 0, roll = document.getElementById("roll");
