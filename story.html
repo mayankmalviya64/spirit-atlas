@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Atlas — Story Mode</title>
+<meta name="description" content="Spirit Atlas: from grain to glass to you. A guided two-minute story of how every drink is made — and what it does to you.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared/components.css">
+<style>
+/* ============ DESIGN TOKENS: "ink & paper, with gold" (same as the Atlas home page) ============ */
+:root {
+  --bg: #f6f1e7; --surface: #fffbf3; --surface-2: #efe6d4; --ink: #1c1712; --muted: #62584a; --line: #ddd1bb;
+  --accent: #8a5d0c; --accent-ink: #fffbf3; --warn: #a3321f; --glow: #e0b25c;
+  --fam-fermented: #96600f; --fam-distilled: #a0401f; --fam-liqueur: #7b2d5b; --fam-rtd: #1d6f69;
+  --font-display: "Fraunces", Georgia, serif; --font-body: "Inter", system-ui, sans-serif; --radius: 12px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #13100c; --surface: #1c1813; --surface-2: #28211a; --ink: #f3ead8; --muted: #b5a88f; --line: #3b3227;
+    --accent: #d9a441; --accent-ink: #1a140c; --warn: #e5735d; --glow: #d9a441;
+    --fam-fermented: #e3a74c; --fam-distilled: #e8835a; --fam-liqueur: #dc8ab8; --fam-rtd: #5cc7bc; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #13100c; --surface: #1c1813; --surface-2: #28211a; --ink: #f3ead8; --muted: #b5a88f; --line: #3b3227;
+  --accent: #d9a441; --accent-ink: #1a140c; --warn: #e5735d; --glow: #d9a441;
+  --fam-fermented: #e3a74c; --fam-distilled: #e8835a; --fam-liqueur: #dc8ab8; --fam-rtd: #5cc7bc; color-scheme: dark;
+}
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+.topbar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1rem;
+  background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(12px); }
+.wordmark { font-family: var(--font-display); font-size: 1.3rem; text-decoration: none; color: var(--ink); white-space: nowrap; }
+.wordmark i { color: var(--accent); }
+.topbar .search { flex: 1; max-width: 24rem; margin-left: auto; }
+.icon-btn { width: 2.4rem; height: 2.4rem; flex: none; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); cursor: pointer; }
+/* Back-to-Atlas pill (mirror of the Atlas's "Story mode" button) */
+.story-btn { flex: none; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.95rem; border-radius: 999px;
+  border: 1px solid var(--accent); color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.88rem; white-space: nowrap; transition: background 0.2s, color 0.2s; }
+.story-btn:hover { background: var(--accent); color: var(--accent-ink); }
+.wordmark { font-weight: 800; }
+.skip { font-size: 0.85rem; font-weight: 700; color: var(--accent); text-decoration: none; white-space: nowrap; }
+@media (max-width: 560px) { .skip { display: none; } }
+
+/* ============ HERO ============ */
+.hero { min-height: calc(100svh - 3.8rem); display: grid; place-items: center; text-align: center; padding: 3rem 1rem; position: relative; overflow: hidden; }
+.hero::before { content: ""; position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--glow) 35%, transparent), transparent 65%); pointer-events: none; }
+.hero-inner { position: relative; max-width: 50rem; }
+.hero h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(2.6rem, 8vw, 5.5rem); line-height: 0.95; margin: 0.5rem 0 1rem; }
+.hero h1 .roll { display: inline-block; color: var(--accent); font-style: italic; min-width: 4ch; }
+.hero .sub { font-size: 1.15rem; color: var(--muted); max-width: 36rem; margin: 0 auto 2rem; }
+.hero-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; }
+.paths { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; margin-top: 2rem; }
+.paths .chip::before { display: none; }
+.hero .dyk { margin: 2.5rem auto 0; max-width: 34rem; font-size: 0.95rem; color: var(--muted); }
+.scroll-cue { display: block; margin-top: 2rem; font-size: 0.8rem; color: var(--muted); animation: bob 2s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .scroll-cue { animation: none; } }
+
+/* ============ STORY (scrollytelling) ============
+   Left: a sticky "vessel" that changes per chapter. Right: chapters that scroll past.
+   On phones the vessel sticks to the top and chapters scroll underneath. */
+.story { position: relative; display: grid; grid-template-columns: 1fr; padding: 0 1rem; }
+@media (min-width: 900px) { .story { grid-template-columns: 1fr 1fr; gap: 3rem; max-width: 72rem; margin: 0 auto; } }
+.stage { position: sticky; top: 3.8rem; height: 42svh; display: grid; place-items: center; z-index: 2;
+  background: linear-gradient(var(--bg) 85%, transparent); }
+@media (min-width: 900px) { .stage { height: calc(100svh - 3.8rem); background: none; } }
+.vessel { display: grid; grid-template-columns: auto auto; align-items: center; gap: 1.5rem; }
+.vessel svg { height: min(30svh, 22rem); width: auto; }
+@media (min-width: 900px) { .vessel { grid-template-columns: 1fr; justify-items: center; text-align: center; } .vessel svg { height: 50svh; } }
+.liquid { transition: transform 0.8s cubic-bezier(.2,.8,.2,1); }
+.wave { transition: fill 0.8s ease; animation: wave 3s linear infinite; }
+@keyframes wave { to { transform: translateX(60px); } } /* one wave period = 60 units, so the loop is seamless */
+.slosh-layer { transform-box: fill-box; transform-origin: 50% 0; }
+.slosh-layer.slosh { animation: slosh 0.9s ease-out; }
+@keyframes slosh { 25% { transform: rotate(-7deg); } 55% { transform: rotate(5deg); } 80% { transform: rotate(-2deg); } }
+/* The whole glass starts to sway once you're past 3 pegs; --sway is set from JS */
+#vessel-svg { transform-origin: 50% 100%; overflow: visible; }
+#vessel-svg.tipsy { animation: sway 2.6s ease-in-out infinite alternate; }
+@keyframes sway { from { transform: rotate(calc(var(--sway, 2deg) * -1)); } to { transform: rotate(var(--sway, 2deg)); } }
+.bubbles circle { animation: bubble 2.4s ease-in infinite; opacity: 0; }
+.bubbles circle:nth-child(2) { animation-delay: 0.6s; } .bubbles circle:nth-child(3) { animation-delay: 1.2s; } .bubbles circle:nth-child(4) { animation-delay: 1.8s; }
+@keyframes bubble { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: 0.8; } 100% { transform: translateY(-120px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .bubbles circle, .wave, .slosh-layer.slosh, #vessel-svg.tipsy { animation: none; } .liquid { transition: none; } }
+.meter b { display: block; font-family: var(--font-display); font-size: clamp(2.2rem, 7vw, 4rem); line-height: 1; }
+.meter span { font-size: 0.85rem; color: var(--muted); }
+.progress { display: flex; gap: 0.35rem; margin-top: 0.8rem; }
+.progress i { width: 1.6rem; height: 4px; border-radius: 2px; background: var(--line); transition: background 0.3s; }
+.progress i.on { background: var(--accent); }
+@media (min-width: 900px) { .progress { justify-content: center; } }
+
+.chapters { position: relative; z-index: 1; padding-bottom: 30svh; }
+.chapter { min-height: 85svh; display: flex; align-items: center; }
+.chapter-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.5rem; box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+  opacity: 0.35; transition: opacity 0.4s; }
+.chapter.is-active .chapter-card { opacity: 1; }
+.chapter-card h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.05; margin: 0 0 0.5rem; }
+.chapter-card .short { color: var(--accent); font-weight: 700; margin: 0 0 0.8rem; }
+.chapter-card .chips { margin-top: 1rem; }
+.mini-calc { margin-top: 1rem; padding: 1rem; border-radius: 12px; background: var(--surface-2); }
+.mini-calc label { font-size: 0.85rem; color: var(--muted); display: block; }
+.mini-calc input { width: 100%; accent-color: var(--accent); }
+.mini-calc label strong { font-size: 1.1rem; color: var(--ink); }
+.mood { display: inline-block; margin-left: 0.4rem; padding: 0.1rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em; background: var(--surface); color: var(--accent); transition: background 0.3s, color 0.3s; }
+.mood.is-warn { background: color-mix(in srgb, var(--warn) 18%, var(--surface)); color: var(--warn); }
+.mood.is-bad { background: var(--warn); color: var(--surface); }
+.ticks { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); padding: 0 0.3rem; }
+.quip { font-family: var(--font-display); font-style: italic; font-size: 1.2rem; line-height: 1.3; margin: 0.8rem 0; min-height: 3.2em; }
+.readouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+.ro { background: var(--surface); border-radius: 10px; padding: 0.6rem; }
+.ro b { display: block; font-family: var(--font-display); font-size: 1.6rem; line-height: 1; }
+.ro span { font-size: 0.72rem; color: var(--muted); } .ro em { font-style: normal; font-weight: 700; color: var(--ink); }
+.dim-label { font-size: 0.78rem; color: var(--muted); margin: 0.9rem 0 0.35rem; }
+.dim-label span { color: var(--ink); font-weight: 600; }
+.hours { display: flex; flex-wrap: wrap; gap: 4px; min-height: 12px; }
+.hours i { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); animation: pop 0.3s ease-out both; }
+@keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+.dim { display: grid; grid-template-columns: 8.5rem 1fr 5.5rem; gap: 0.6rem; align-items: center; margin-top: 0.45rem; }
+.dim .dim-label { margin: 0; }
+.bar { height: 8px; border-radius: 4px; background: var(--surface); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; border-radius: 4px; background: var(--accent); transition: width 0.6s cubic-bezier(.2,.8,.2,1), background 0.4s; }
+.bar i.is-warn { background: color-mix(in srgb, var(--warn) 60%, var(--accent)); } .bar i.is-bad { background: var(--warn); }
+.dim em { font-style: normal; font-size: 0.75rem; font-weight: 600; text-align: right; }
+.binge { margin: 0.9rem 0 0; padding: 0.55rem 0.75rem; border-radius: 8px; border: 1px solid var(--warn); color: var(--warn); font-size: 0.85rem; font-weight: 600; }
+@media (max-width: 480px) { .dim { grid-template-columns: 6.5rem 1fr 4.5rem; } }
+@media (prefers-reduced-motion: reduce) { .hours i { animation: none; } .bar i { transition: none; } }
+
+/* ============ EXPLORE HUB ============ */
+.hub { padding: 4rem 1rem 3rem; border-top: 1px solid var(--line); background: var(--surface-2); }
+.hub-head { max-width: 72rem; margin: 0 auto 1.5rem; }
+.hub-head h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(2rem, 6vw, 3.5rem); margin: 0; line-height: 1; }
+.hub-head p { color: var(--muted); margin: 0.5rem 0 0; }
+/* The tool picker: big tiles on first view, then a sticky tab strip */
+.hub-tabs { position: sticky; top: 3.8rem; z-index: 20; display: flex; gap: 0.4rem; overflow-x: auto; padding: 0.6rem 0; margin: 0 auto; max-width: 72rem;
+  background: var(--surface-2); scrollbar-width: none; }
+.hub-tab { flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; min-width: 9.5rem; padding: 0.75rem 1rem; border-radius: 14px;
+  border: 1px solid var(--line); background: var(--surface); cursor: pointer; text-align: left; transition: transform 0.15s; }
+.hub-tab:hover { transform: translateY(-2px); }
+.hub-tab b { font-size: 0.95rem; } .hub-tab small { font-size: 0.75rem; color: var(--muted); }
+.hub-tab[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.hub-tab[aria-selected="true"] small { color: inherit; opacity: 0.7; }
+.hub-panel { max-width: 72rem; margin: 1.25rem auto 0; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.5rem 1.25rem; min-height: 50vh; }
+.hub-panel h3.panel-title { font-family: var(--font-display); font-weight: 400; font-size: 2rem; margin: 0 0 0.25rem; }
+.hub-panel .panel-lede { color: var(--muted); margin: 0 0 1.5rem; }
+.site-foot { padding: 2.5rem 1rem 4rem; color: var(--muted); font-size: 0.9rem; max-width: 72rem; margin: 0 auto; }
+.proto-note { font-size: 0.8rem; background: var(--surface-2); padding: 0.5rem 0.75rem; border-radius: 8px; display: inline-block; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="wordmark" href="index.html">Spirit <i>Atlas</i></a>
+  <a class="skip" href="#hub">Skip to explore →</a>
+  <div class="search">
+    <label class="visually-hidden" for="q">Search drinks, brands, regions and terms</label>
+    <input id="q" type="search" placeholder="Search anything…" autocomplete="off" aria-controls="q-results">
+    <ul id="q-results" class="search-results" hidden></ul>
+  </div>
+  <a class="story-btn" href="index.html" title="Back to the full Atlas"><span aria-hidden="true">←</span> Atlas</a>
+  <button class="icon-btn" id="theme" type="button"></button>
+</header>
+
+<main id="top">
+  <!-- HERO -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-inner">
+      <p class="eyebrow">Spirit Atlas · a guide to the world of alcohols</p>
+      <h1 id="hero-title">From grain to glass<br>to <span class="roll" id="roll">you</span>.</h1>
+      <p class="sub">A two-minute scroll through how every drink is made, then an atlas you can wander around in.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#story">Start the story ↓</a>
+        <a class="btn" href="#hub">Skip to the tools</a>
+      </div>
+      <!-- "Pick your path" shortcuts jump straight into a hub tool -->
+      <div class="paths" aria-label="Pick your path">
+        <a class="chip" href="#hub" data-jump="explorer">Explore categories</a>
+        <a class="chip" href="#hub" data-jump="atlas">Regional map</a>
+        <a class="chip" href="#hub" data-jump="match">Occasion matchmaker</a>
+        <a class="chip" href="#hub" data-jump="math">Alcohol math</a>
+      </div>
+      <p class="dyk"><strong>Did you know?</strong> <span class="ticker" id="ticker" aria-live="polite"></span></p>
+      <span class="scroll-cue" aria-hidden="true">scroll ↓</span>
+    </div>
+  </section>
+
+  <!-- STORY -->
+  <section class="story" id="story" aria-label="The story: from sugar to your bloodstream">
+    <div class="stage" aria-hidden="true">
+      <div class="vessel">
+        <svg viewBox="0 0 120 200" id="vessel-svg">
+          <defs><clipPath id="glass-clip"><path d="M20 10h80l-8 170a10 10 0 0 1-10 10H38a10 10 0 0 1-10-10z"/></clipPath></defs>
+          <g clip-path="url(#glass-clip)">
+            <!-- Liquid = 3 nested layers: moves up/down (#liquid) › sloshes (#slosh) › wave scrolls sideways (#wave) -->
+            <g class="liquid" id="liquid"><g id="slosh" class="slosh-layer">
+              <path class="wave" id="wave" fill="#e9d8a6" d="M-60 6 Q-45 0 -30 6 T0 6 T30 6 T60 6 T90 6 T120 6 T150 6 T180 6 T210 6 T240 6 V230 H-60 Z"/>
+            </g></g>
+            <g class="bubbles" id="bubbles" fill="#fff"><circle cx="45" cy="180" r="3"/><circle cx="70" cy="185" r="2.5"/><circle cx="58" cy="182" r="2"/><circle cx="80" cy="186" r="3"/></g>
+          </g>
+          <path d="M20 10h80l-8 170a10 10 0 0 1-10 10H38a10 10 0 0 1-10-10z" fill="none" stroke="currentColor" stroke-width="3" opacity="0.6"/>
+        </svg>
+        <div>
+          <div class="meter"><b id="meter-value">0%</b><span id="meter-label">sugar + water</span></div>
+          <div class="progress" id="progress"></div>
+        </div>
+      </div>
+    </div>
+    <div class="chapters" id="chapters"></div>
+  </section>
+
+  <!-- EXPLORE HUB -->
+  <section class="hub" id="hub" aria-labelledby="hub-title">
+    <div class="hub-head">
+      <p class="eyebrow">Part two</p>
+      <h2 id="hub-title">Now, explore.</h2>
+      <p>Pick a tool. Everything opens right here.</p>
+    </div>
+    <div class="hub-tabs" role="tablist" aria-label="Explore tools" id="hub-tabs"></div>
+    <div class="hub-panel" role="tabpanel" id="hub-panel" tabindex="-1"></div>
+  </section>
+
+  <footer class="site-foot">
+    <p><strong>Spirit Atlas</strong> is an educational project. It does not sell or promote the purchase of alcohol. Brand ownership is stated as of 2026; ⚠️ marks facts still being verified.</p>
+    <p class="proto-note">Story mode · <a href="index.html">Back to the full Atlas</a> · data v<span id="ver"></span></p>
+  </footer>
+</main>
+
+<div class="disclaimer" role="note">For adults of legal drinking age only. Please drink responsibly, and never drink and drive. <a href="#hub" data-jump="health">Know your limits →</a></div>
+
+<script src="shared/data.js"></script>
+<script src="shared/core.js"></script>
+<script>
+/* ============ PAGE WIRING (MVP 3) ============ */
+(function () {
+  var D = window.ATLAS_DATA, A = window.Atlas, esc = A.esc;
+
+  A.initAgeGate();
+  A.initTheme(document.getElementById("theme"));
+  A.initSearch(document.getElementById("q"), document.getElementById("q-results"));
+  A.startTicker(document.getElementById("ticker"));
+  document.getElementById("ver").textContent = D.version;
+
+  /* ----- Hero: the last word of the headline cycles ----- */
+  var words = ["you", "grain", "grape", "cane", "agave", "you"], w = 0, roll = document.getElementById("roll");
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    setInterval(function () { w = (w + 1) % words.length; roll.textContent = words[w]; }, 1800);
+  }
+
+  /* ----- STORY chapters -----
+     The middle four come straight from D.process; the first and last two are
+     assembled from other parts of the data layer (families, pours, health). */
+  var pourById = {}; D.serve.pours.forEach(function (p) { pourById[p.id] = p; });
+  var chapters = [
+    { id: "sugar", eyebrow: "Chapter 0", title: "It all starts with sugar",
+      short: "Grapes, grain, cane, agave, flowers: anything sweet can become alcohol.",
+      html: "<p>Every drink belongs to one of four families. Keep them in mind; the colours follow you through the whole site.</p>" +
+        '<div class="chips">' + D.families.map(function (f) { return '<button class="chip" style="--fam: var(--fam-' + f.id + ')" data-open-type="family" data-open-id="' + f.id + '">' + esc(f.name) + "</button>"; }).join("") + "</div>",
+      meter: { value: "0%", label: "sugar + water", fill: 0.1 }, colour: "#e9d8a6" }
+  ].concat(D.process.map(function (s) {
+    return { id: s.id, eyebrow: "Step " + s.n, title: s.title, short: s.short,
+      html: "<p>" + esc(s.body) + '</p><ul class="list">' + s.points.map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("") + "</ul>",
+      meter: s.meter, colour: { ferment: "#e3b04b", distil: "#dfe9ee", age: "#b8651d", bottle: "#c7792a" }[s.id], bubbles: s.id === "ferment" };
+  })).concat([
+    { id: "glass", eyebrow: "Chapter 5", title: "Into the glass",
+      short: "A 'drink' is not a unit. The size of the pour is everything.",
+      html: '<ul class="list">' + D.serve.pours.map(function (p) { return "<li><strong>" + esc(p.name) + ":</strong> " + p.ml + " ml. " + esc(p.note) + "</li>"; }).join("") + "</ul>",
+      meter: { value: pourById["p-small"].ml + " ml", label: "one small peg", fill: 0.3 }, colour: "#c7792a" },
+    { id: "body", eyebrow: "Chapter 6", title: "Into you",
+      short: D.health.headline[0].text,
+      html: "<p>Your liver clears roughly one standard drink (~10 g) an hour. Coffee and cold showers don't speed it up. Drag the slider and watch the glass:</p>" +
+        '<div class="mini-calc">' +
+        '<label for="mini">Large pegs (60 ml) of 42.8% whisky: <strong id="mini-n">2</strong> <span class="mood" id="mini-mood"></span></label>' +
+        '<input id="mini" type="range" min="0" max="8" step="1" value="2" aria-describedby="mini-quip">' +
+        '<div class="ticks" aria-hidden="true"><span>0</span><span>2</span><span>4</span><span>6</span><span>8</span></div>' +
+        '<p class="quip" id="mini-quip" aria-live="polite"></p>' +
+        '<div class="readouts">' +
+          '<div class="ro"><b id="ro-g">0</b><span>grams of alcohol</span></div>' +
+          '<div class="ro"><b id="ro-sd">0</b><span>standard drinks (10 g)</span></div>' +
+          '<div class="ro"><b id="ro-kcal">0</b><span>kcal ≈ <em id="ro-roti">0</em> rotis</span></div>' +
+        "</div>" +
+        '<div class="liver"><p class="dim-label">Liver clock <span id="ro-hours-txt"></span></p><div class="hours" id="ro-hours" aria-hidden="true"></div></div>' +
+        '<div class="dims" id="dims"></div>' +
+        '<p class="binge" id="binge" hidden>⚠️ Past ' + D.health.heavyEpisodicGrams + ' g in one sitting: the WHO defines this as heavy episodic (binge) drinking.</p>' +
+        '<p class="small muted">' + esc(D.health.pegDisclaimer) + "</p>" +
+        "</div>" +
+        '<p><a class="btn" href="#hub" data-jump="health">Read the health chapter</a></p>',
+      meter: { value: "", label: "grams of alcohol", fill: 0.05 }, colour: "#a8322a" }
+  ]);
+
+  var list = document.getElementById("chapters");
+  list.innerHTML = chapters.map(function (c) {
+    return '<article class="chapter" data-ch="' + c.id + '"><div class="chapter-card"><p class="eyebrow">' + esc(c.eyebrow) +
+      "</p><h2>" + esc(c.title) + '</h2><p class="short">' + esc(c.short) + "</p>" + c.html + "</div></article>";
+  }).join("");
+  document.getElementById("progress").innerHTML = chapters.map(function () { return "<i></i>"; }).join("");
+
+  /* ----- "Into you": the pegs slider drives the glass + health readouts ----- */
+  var H = D.health, mini = document.getElementById("mini");
+  var svgEl = document.getElementById("vessel-svg"), sloshEl = document.getElementById("slosh"), waveEl = document.getElementById("wave");
+
+  // Build the empty health bars once (one per dimension in the data layer).
+  document.getElementById("dims").innerHTML = H.dimensions.map(function (d) {
+    return '<div class="dim"><span class="dim-label">' + esc(d.name) + '</span><div class="bar"><i id="bar-' + d.id + '"></i></div><em id="val-' + d.id + '"></em></div>';
+  }).join("");
+
+  // Blend two hex colours: t=0 gives a, t=1 gives b. Used to darken the drink as pegs go up.
+  function mix(a, b, t) {
+    var pa = [1, 3, 5].map(function (i) { return parseInt(a.substr(i, 2), 16); });
+    var pb = [1, 3, 5].map(function (i) { return parseInt(b.substr(i, 2), 16); });
+    return "#" + pa.map(function (v, i) { return Math.round(v + (pb[i] - v) * t).toString(16).padStart(2, "0"); }).join("");
+  }
+  // Turn a 0–100 bar value into a word, so the bars aren't read as precise measurements.
+  function level(v) { return v === 0 ? "—" : v < 25 ? "Mild" : v < 50 ? "Noticeable" : v < 75 ? "Impaired" : "Severe"; }
+
+  // Move/colour the glass liquid. `fill` is 0–1 of the glass height.
+  function setLiquid(fill, colour) {
+    var h = Math.round(180 * fill) + 10;
+    liquid.style.transform = "translateY(" + (190 - h) + "px)";
+    waveEl.setAttribute("fill", colour);
+  }
+
+  function miniCalc(fromSlider) {
+    var n = +mini.value, g = A.alcoholGrams(n * 60, 42.8), row = H.pegScale[n];
+    var hours = Math.round(g / 10);
+    document.getElementById("mini-n").textContent = n;
+    document.getElementById("mini-mood").textContent = row.mood;
+    document.getElementById("mini-mood").className = "mood" + (n >= 5 ? " is-bad" : n >= 3 ? " is-warn" : "");
+    document.getElementById("mini-quip").textContent = row.line;
+    document.getElementById("ro-g").textContent = g.toFixed(0);
+    document.getElementById("ro-sd").textContent = (g / 10).toFixed(1);
+    document.getElementById("ro-kcal").textContent = Math.round(g * 7);
+    document.getElementById("ro-roti").textContent = Math.round(g * 7 / H.rotiKcal);
+    document.getElementById("ro-hours-txt").textContent = n === 0 ? "— nothing to clear" : "— about " + hours + (hours === 1 ? " hour" : " hours") + " to clear";
+    // One pip per hour of liver work; they light up one after another.
+    document.getElementById("ro-hours").innerHTML = Array.from({ length: hours }, function (_, i) {
+      return '<i style="animation-delay:' + (i * 40) + 'ms"></i>';
+    }).join("");
+    H.dimensions.forEach(function (d) {
+      var v = row[d.id], bar = document.getElementById("bar-" + d.id);
+      bar.style.width = v + "%";
+      bar.classList.toggle("is-bad", v >= 70);
+      bar.classList.toggle("is-warn", v >= 40 && v < 70);
+      document.getElementById("val-" + d.id).textContent = level(v);
+    });
+    document.getElementById("binge").hidden = g < H.heavyEpisodicGrams;
+
+    // Only drive the glass while this chapter is the active one.
+    if (activeId !== "body") return;
+    document.getElementById("meter-value").textContent = n === 0 ? "0 g" : g.toFixed(0) + " g";
+    document.getElementById("meter-label").textContent = n === 0 ? "just water. Respect." : row.mood.toLowerCase();
+    // 0 pegs = a glass of water; otherwise amber whisky that darkens towards red.
+    if (n === 0) setLiquid(0.35, "#cfe4ec");
+    else setLiquid(0.1 + n * 0.1, mix("#d8942f", "#7c2414", (n - 1) / 7));
+    // Past 3 pegs the glass gets tipsy, and sways more with every peg.
+    svgEl.classList.toggle("tipsy", n > 3);
+    svgEl.style.setProperty("--sway", Math.max(0, n - 3) * 1.6 + "deg");
+    // Re-trigger the slosh animation on every slider move.
+    if (fromSlider) { sloshEl.classList.remove("slosh"); void sloshEl.getBBox(); sloshEl.classList.add("slosh"); }
+  }
+  mini.addEventListener("input", function () { miniCalc(true); A.bus.emit("calculator_used", { source: "story", pegs: +mini.value }); });
+
+  // Update the sticky vessel when a chapter reaches the middle of the screen.
+  var liquid = document.getElementById("liquid"), bubbles = document.getElementById("bubbles"), activeId = null;
+  function activate(id) {
+    activeId = id;
+    var idx = chapters.findIndex(function (c) { return c.id === id; }), c = chapters[idx];
+    var h = Math.round(180 * c.meter.fill) + 10;
+    // Slide the liquid down so only `h` units show, and recolour it.
+    liquid.style.transform = "translateY(" + (190 - h) + "px)"; waveEl.setAttribute("fill", c.colour);
+    svgEl.classList.remove("tipsy"); // only the "Into you" chapter makes the glass sway
+    bubbles.style.display = c.bubbles ? "" : "none";
+    document.getElementById("meter-value").textContent = c.meter.value;
+    document.getElementById("meter-label").textContent = c.meter.label;
+    document.querySelectorAll("#progress i").forEach(function (el, k) { el.classList.toggle("on", k <= idx); });
+    document.querySelectorAll(".chapter").forEach(function (el) { el.classList.toggle("is-active", el.getAttribute("data-ch") === id); });
+    if (id === "body") miniCalc(false);
+    A.bus.emit("story_chapter_viewed", { id: id });
+  }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) { if (en.isIntersecting) activate(en.target.getAttribute("data-ch")); });
+  }, { rootMargin: "-45% 0px -45% 0px" });
+  document.querySelectorAll(".chapter").forEach(function (el) { io.observe(el); });
+  activate("sugar");
+
+  /* ----- EXPLORE HUB ----- */
+  var tools = [
+    { id: "explorer", name: "Category explorer", hint: "Family → bottle", lede: "Open branches with ›, and tap any name for details.", render: A.renderExplorer },
+    { id: "atlas", name: "Regional atlas", hint: "Feni to baijiu", lede: "Tap a highlighted state or a country.", render: A.renderAtlas },
+    { id: "match", name: "Matchmaker", hint: "What to order", lede: "What you order is a signal. Pick the occasion.", render: A.renderMatchmaker },
+    { id: "math", name: "Alcohol math", hint: "Grams, not guesses", lede: "Your body counts grams of ethanol, not drinks.", render: A.renderCalculator },
+    { id: "health", name: "Health & safety", hint: "Know your limits", lede: "The unglamorous chapter, and the most important one.", render: A.renderHealth },
+    { id: "business", name: "Business of booze", hint: "Portfolios & pricing", lede: "A few giants, many brands, and India's 28 liquor markets.", render: A.renderBusiness },
+    { id: "serve", name: "Serve & etiquette", hint: "Pegs, glasses, toasts", lede: "How to pour, serve and say cheers.", render: A.renderServe },
+    { id: "glossary", name: "Glossary", hint: "Label, decoded", lede: "Every term on the bottle, explained.", render: A.renderGlossary }
+  ];
+  var tabs = document.getElementById("hub-tabs"), panel = document.getElementById("hub-panel");
+  tabs.innerHTML = tools.map(function (t) {
+    return '<button class="hub-tab" role="tab" id="tab-' + t.id + '" aria-controls="hub-panel" aria-selected="false" data-tool="' + t.id + '"><b>' + esc(t.name) + "</b><small>" + esc(t.hint) + "</small></button>";
+  }).join("");
+  // Each tool gets its own container, rendered only the first time it's opened (lazy).
+  var containers = {};
+  function openTool(id, scroll) {
+    var t = tools.filter(function (x) { return x.id === id; })[0];
+    tabs.querySelectorAll(".hub-tab").forEach(function (b) { b.setAttribute("aria-selected", b.getAttribute("data-tool") === id); });
+    panel.setAttribute("aria-labelledby", "tab-" + id);
+    Object.keys(containers).forEach(function (k) { containers[k].hidden = k !== id; });
+    if (!containers[id]) {
+      var box = document.createElement("div");
+      box.innerHTML = '<h3 class="panel-title">' + esc(t.name) + '</h3><p class="panel-lede">' + esc(t.lede) + "</p><div></div>";
+      panel.appendChild(box); containers[id] = box;
+      t.render(box.lastElementChild);
+    }
+    // Scroll only the tab strip sideways so the chosen tab is visible (never the whole page).
+    var tabBtn = tabs.querySelector('[data-tool="' + id + '"]');
+    tabs.scrollLeft = tabBtn.offsetLeft - tabs.offsetLeft - 16;
+    if (scroll) document.getElementById("hub").scrollIntoView();
+    A.bus.emit("hub_tool_opened", { id: id });
+  }
+  tabs.addEventListener("click", function (e) { var b = e.target.closest("[data-tool]"); if (b) openTool(b.getAttribute("data-tool")); });
+  // Arrow keys move between tabs (standard tab-list keyboard pattern).
+  tabs.addEventListener("keydown", function (e) {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    var all = Array.from(tabs.querySelectorAll(".hub-tab")), i = all.indexOf(document.activeElement);
+    if (i < 0) return;
+    var next = all[(i + (e.key === "ArrowRight" ? 1 : all.length - 1)) % all.length];
+    next.focus(); openTool(next.getAttribute("data-tool"));
+  });
+  // Any link with data-jump opens that tool (hero shortcuts, footer "Know your limits").
+  document.addEventListener("click", function (e) {
+    var j = e.target.closest("[data-jump]"); if (!j) return;
+    e.preventDefault(); openTool(j.getAttribute("data-jump"), true);
+  });
+  openTool("explorer");
+})();
+</script>
+</body>
+</html>
