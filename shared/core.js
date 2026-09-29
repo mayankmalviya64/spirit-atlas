@@ -111,29 +111,32 @@
     });
   };
 
-  // Age gate: a soft, modal check. Nothing is stored — it asks on every visit.
-  Atlas.initAgeGate = function () {
-    var dlg = document.createElement("dialog");
-    dlg.className = "age-gate";
-    dlg.innerHTML =
-      '<div class="age-gate-inner">' +
-      '<p class="eyebrow">Before you pour</p>' +
-      '<h2>Spirit Atlas is for adults.</h2>' +
-      "<p>" + esc(D.locale.ageGateText) + "</p>" +
-      '<div class="age-gate-actions"><button class="btn btn-primary" data-yes>Yes, I am</button>' +
-      '<button class="btn" data-no>No</button></div>' +
-      '<p class="small muted">We don\'t store your answer. This site is educational and does not sell alcohol.</p>' +
-      "</div>";
-    document.body.appendChild(dlg);
-    // Stop Escape from closing the gate without answering.
-    dlg.addEventListener("cancel", function (e) { e.preventDefault(); });
-    dlg.querySelector("[data-yes]").addEventListener("click", function () { dlg.close(); dlg.remove(); });
-    dlg.querySelector("[data-no]").addEventListener("click", function () {
-      dlg.querySelector(".age-gate-inner").innerHTML =
-        "<h2>Come back later.</h2><p>This guide is only for people of legal drinking age. " +
-        "Meanwhile, the best drink in the world is still cold water.</p>";
-    });
-    dlg.showModal();
+  // Drinking-age notice: slides up in the bottom bar on first visit of the day,
+  // disappears after 5 seconds (or when × is pressed). Replaces the old modal age gate.
+  // "Once per day" = we store today's date in localStorage (only in this browser, never sent anywhere).
+  // `link` = where "Know your limits" points, e.g. { href: "#health" } or { href: "#hub", jump: "health" }.
+  Atlas.initNotice = function (link) {
+    var KEY = "atlas-notice-day", today = new Date().toDateString();
+    var seen = null;
+    try { seen = localStorage.getItem(KEY); } catch (e) { /* storage blocked: just show it */ }
+    if (seen === today) return; // already shown today
+
+    var bar = document.createElement("div");
+    bar.className = "disclaimer";
+    bar.setAttribute("role", "note");
+    bar.innerHTML = "<p>" + esc(D.locale.noticeText) + ' <a href="' + esc(link.href) + '"' +
+      (link.jump ? ' data-jump="' + esc(link.jump) + '"' : "") + ">Know your limits →</a></p>" +
+      '<button class="disclaimer-close" type="button" aria-label="Dismiss notice">×</button>';
+    document.body.appendChild(bar);
+    try { localStorage.setItem(KEY, today); } catch (e) {}
+
+    // Slide out, then remove from the page once the animation has finished.
+    function hide() {
+      bar.classList.add("is-hiding");
+      setTimeout(function () { bar.remove(); }, 400);
+    }
+    bar.querySelector(".disclaimer-close").addEventListener("click", hide);
+    setTimeout(hide, 5000);
   };
 
   /* ---------------- 4. DETAIL DRAWER ---------------- */

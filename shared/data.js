@@ -703,6 +703,8 @@
   var locale = {
     country: "India",
     ageGateText: "Are you of legal drinking age in your state? (It ranges from 18 to 25 across India, and some states are dry.)",
+    // Bottom notice shown for 5 seconds, once a day (see Atlas.initNotice in core.js)
+    noticeText: "Spirit Atlas is for adults of legal drinking age in your state (18–25 across India; some states are dry). Drink safely: pace yourself, eat, hydrate, and never drink and drive.",
     standardDrinks: [
       { id: "who", label: "WHO / India (10 g)", grams: 10 },
       { id: "us", label: "USA (14 g)", grams: 14 },

@@ -187,10 +187,20 @@ button, input, select { font: inherit; color: inherit; }
 .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
 .reveal.shown { opacity: 1; transform: none; }
 
-/* ---------- Footer disclaimer ---------- */
-.disclaimer { position: sticky; bottom: 0; z-index: 20; font-size: 0.78rem; text-align: center; padding: 0.45rem 1rem;
-  background: var(--ink); color: var(--bg); }
+/* ---------- Drinking-age notice (bottom bar, 5 seconds, once a day) ---------- */
+.disclaimer { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; font-size: 0.85rem; text-align: center;
+  padding: 0.8rem 3rem 0.8rem 1rem; background: var(--ink); color: var(--bg); box-shadow: 0 -8px 24px rgba(0,0,0,0.2);
+  animation: notice-in 0.4s ease-out; transition: transform 0.4s ease, opacity 0.4s ease; }
+.disclaimer p { margin: 0; max-width: 60rem; margin-inline: auto; }
 .disclaimer a { color: inherit; font-weight: 700; }
+.disclaimer-close { position: absolute; top: 0.35rem; right: 0.5rem; width: 2rem; height: 2rem; border: none; border-radius: 50%;
+  background: transparent; color: inherit; font-size: 1.3rem; line-height: 1; cursor: pointer; }
+.disclaimer-close:hover { background: rgba(255,255,255,0.15); }
+.disclaimer.is-hiding { transform: translateY(100%); opacity: 0; }
+@keyframes notice-in { from { transform: translateY(100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .disclaimer { animation: none; transition: none; } }
+/* Permanent, always-visible disclaimer line in each page footer */
+.footer-note { font-weight: 600; }
 
 /* ---------- Generic cards & lists (health, business, serve) ---------- */
 .sub-h { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin: 2rem 0 0.8rem; font-weight: 700; }
