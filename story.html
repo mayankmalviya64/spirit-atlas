@@ -71,9 +71,35 @@ html { scroll-behavior: smooth; }
 .stage { position: sticky; top: 3.8rem; height: 42svh; display: grid; place-items: center; z-index: 2;
   background: linear-gradient(var(--bg) 85%, transparent); }
 @media (min-width: 900px) { .stage { height: calc(100svh - 3.8rem); background: none; } }
-.vessel { display: grid; grid-template-columns: auto auto; align-items: center; gap: 1.5rem; }
+/* Phones: glass on the left; bubble, number and notes stacked on the right */
+.vessel { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.5rem 1.25rem; max-width: 100%; }
+.vessel svg { grid-column: 1; grid-row: 1 / span 2; }
+.vessel .bubble { grid-column: 2; grid-row: 1; align-self: end; }
+.vessel > div { grid-column: 2; grid-row: 2; align-self: start; }
 .vessel svg { height: min(30svh, 22rem); width: auto; }
-@media (min-width: 900px) { .vessel { grid-template-columns: 1fr; justify-items: center; text-align: center; } .vessel svg { height: 50svh; } }
+/* Desktop: bubble above the glass, number + notes below — all in one column */
+@media (min-width: 900px) {
+  .vessel { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .vessel svg, .vessel .bubble, .vessel > div { grid-column: 1; grid-row: auto; }
+  .vessel svg { height: 44svh; }
+}
+/* The speech bubble. Its tail points left at the glass on phones, down at it on desktop. */
+.bubble { position: relative; margin: 0; max-width: 22rem; padding: 0.7rem 0.95rem; border-radius: 14px; background: var(--surface);
+  border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,0.1); font-family: var(--font-display); font-style: italic;
+  font-size: clamp(0.9rem, 2.4vw, 1.2rem); line-height: 1.3; text-align: left; }
+.bubble::after { content: ""; position: absolute; width: 14px; height: 14px; background: inherit; border: inherit; border-top: none; border-right: none;
+  left: -8px; bottom: 14px; transform: rotate(45deg); }
+@media (min-width: 900px) { .bubble { text-align: center; } .bubble::after { left: calc(50% - 7px); bottom: -8px; transform: rotate(-45deg); } }
+.bubble.is-warn { border-color: color-mix(in srgb, var(--warn) 50%, var(--line)); }
+.bubble.is-bad { border-color: var(--warn); color: var(--warn); }
+.bubble.pop { animation: bubble-pop 0.35s cubic-bezier(.2,1.4,.4,1); }
+@keyframes bubble-pop { from { transform: scale(0.85); opacity: 0; } to { transform: none; opacity: 1; } }
+.stage-note { margin-top: 0.5rem; display: grid; gap: 0.4rem; justify-items: start; max-width: 22rem; }
+@media (min-width: 900px) { .stage-note { justify-items: center; } }
+.stage-note .mood { margin-left: 0; }
+.stage-note .binge { margin: 0; text-align: left; }
+@media (max-width: 899px) { .stage-note .binge { font-size: 0.72rem; padding: 0.35rem 0.5rem; } }
+@media (prefers-reduced-motion: reduce) { .bubble.pop { animation: none; } }
 .liquid { transition: transform 0.8s cubic-bezier(.2,.8,.2,1); }
 .wave { transition: fill 0.8s ease; animation: wave 3s linear infinite; }
 @keyframes wave { to { transform: translateX(60px); } } /* one wave period = 60 units, so the loop is seamless */
@@ -113,7 +139,7 @@ html { scroll-behavior: smooth; }
 .mood.is-bad { background: var(--warn); color: var(--surface); }
 .ticks { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); padding: 0 0.3rem; }
 .quip { font-family: var(--font-display); font-style: italic; font-size: 1.2rem; line-height: 1.3; margin: 0.8rem 0; min-height: 3.2em; }
-.readouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+.readouts { margin-top: 1rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
 .ro { background: var(--surface); border-radius: 10px; padding: 0.6rem; }
 .ro b { display: block; font-family: var(--font-display); font-size: 1.6rem; line-height: 1; }
 .ro span { font-size: 0.72rem; color: var(--muted); } .ro em { font-style: normal; font-weight: 700; color: var(--ink); }
@@ -194,6 +220,8 @@ html { scroll-behavior: smooth; }
   <section class="story" id="story" aria-label="The story: from sugar to your bloodstream">
     <div class="stage" aria-hidden="true">
       <div class="vessel">
+        <!-- Speech bubble: the glass "talks" in the Into-you chapter (filled from data.js pegScale lines) -->
+        <p class="bubble" id="bubble" hidden></p>
         <svg viewBox="0 0 120 200" id="vessel-svg">
           <defs><clipPath id="glass-clip"><path d="M20 10h80l-8 170a10 10 0 0 1-10 10H38a10 10 0 0 1-10-10z"/></clipPath></defs>
           <g clip-path="url(#glass-clip)">
@@ -207,6 +235,8 @@ html { scroll-behavior: smooth; }
         </svg>
         <div>
           <div class="meter"><b id="meter-value">0%</b><span id="meter-label">sugar + water</span></div>
+          <!-- Mood tag + WHO 60 g warning, shown next to the glass in the Into-you chapter -->
+          <div class="stage-note" id="stage-note" hidden><span class="mood" id="stage-mood"></span><p class="binge" id="binge" hidden></p></div>
           <div class="progress" id="progress"></div>
         </div>
       </div>
@@ -278,7 +308,7 @@ html { scroll-behavior: smooth; }
         '<label for="mini">Large pegs (60 ml) of 42.8% whisky: <strong id="mini-n">2</strong> <span class="mood" id="mini-mood"></span></label>' +
         '<input id="mini" type="range" min="0" max="8" step="1" value="2" aria-describedby="mini-quip">' +
         '<div class="ticks" aria-hidden="true"><span>0</span><span>2</span><span>4</span><span>6</span><span>8</span></div>' +
-        '<p class="quip" id="mini-quip" aria-live="polite"></p>' +
+        '<p class="visually-hidden" id="mini-quip" aria-live="polite"></p>' + // read aloud for screen readers; sighted users see the bubble by the glass
         '<div class="readouts">' +
           '<div class="ro"><b id="ro-g">0</b><span>grams of alcohol</span></div>' +
           '<div class="ro"><b id="ro-sd">0</b><span>standard drinks (10 g)</span></div>' +
@@ -286,7 +316,6 @@ html { scroll-behavior: smooth; }
         "</div>" +
         '<div class="liver"><p class="dim-label">Liver clock <span id="ro-hours-txt"></span></p><div class="hours" id="ro-hours" aria-hidden="true"></div></div>' +
         '<div class="dims" id="dims"></div>' +
-        '<p class="binge" id="binge" hidden>⚠️ Past ' + D.health.heavyEpisodicGrams + ' g in one sitting: the WHO defines this as heavy episodic (binge) drinking.</p>' +
         '<p class="small muted">' + esc(D.health.pegDisclaimer) + "</p>" +
         "</div>" +
         '<p><a class="btn" href="#hub" data-jump="health">Read the health chapter</a></p>',
@@ -348,12 +377,22 @@ html { scroll-behavior: smooth; }
       bar.classList.toggle("is-warn", v >= 40 && v < 70);
       document.getElementById("val-" + d.id).textContent = level(v);
     });
-    document.getElementById("binge").hidden = g < H.heavyEpisodicGrams;
+    var binge = document.getElementById("binge");
+    binge.hidden = g < H.heavyEpisodicGrams;
+    binge.textContent = "⚠️ Past " + H.heavyEpisodicGrams + " g in one sitting: the WHO calls this heavy episodic (binge) drinking.";
 
     // Only drive the glass while this chapter is the active one.
     if (activeId !== "body") return;
+    // Speech bubble + mood tag next to the glass, where the reader is looking.
+    var bubble = document.getElementById("bubble");
+    bubble.textContent = row.line; bubble.hidden = false;
+    bubble.className = "bubble" + (n >= 5 ? " is-bad" : n >= 3 ? " is-warn" : "");
+    bubble.classList.remove("pop"); void bubble.offsetWidth; bubble.classList.add("pop"); // replay the pop-in
+    var stageMood = document.getElementById("stage-mood");
+    stageMood.textContent = row.mood; stageMood.className = document.getElementById("mini-mood").className;
+    document.getElementById("stage-note").hidden = false;
     document.getElementById("meter-value").textContent = n === 0 ? "0 g" : g.toFixed(0) + " g";
-    document.getElementById("meter-label").textContent = n === 0 ? "just water. Respect." : row.mood.toLowerCase();
+    document.getElementById("meter-label").textContent = n === 0 ? "just water. Respect." : "grams of alcohol";
     // 0 pegs = a glass of water; otherwise amber whisky that darkens towards red.
     if (n === 0) setLiquid(0.35, "#cfe4ec");
     else setLiquid(0.1 + n * 0.1, mix("#d8942f", "#7c2414", (n - 1) / 7));
@@ -374,6 +413,8 @@ html { scroll-behavior: smooth; }
     // Slide the liquid down so only `h` units show, and recolour it.
     liquid.style.transform = "translateY(" + (190 - h) + "px)"; waveEl.setAttribute("fill", c.colour);
     svgEl.classList.remove("tipsy"); // only the "Into you" chapter makes the glass sway
+    document.getElementById("bubble").hidden = true;      // bubble + note belong to "Into you" only
+    document.getElementById("stage-note").hidden = true;
     bubbles.style.display = c.bubbles ? "" : "none";
     document.getElementById("meter-value").textContent = c.meter.value;
     document.getElementById("meter-label").textContent = c.meter.label;
