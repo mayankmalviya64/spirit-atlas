@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Spirit Atlas</title>
+<script>
+// Open the full Atlas by default. Its Story links opt into the guided tour.
+if (new URLSearchParams(window.location.search).get("mode") !== "story") {
+  window.location.replace("atlas.html" + window.location.search + window.location.hash);
+}
+</script>
 <meta name="description" content="Spirit Atlas: from grain to glass to you. A guided two-minute story of how every drink is made — and what it does to you.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
